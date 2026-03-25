@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="pt-br" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SF Fruits | High Performance Fruit Export</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        html { background-color: #000; font-family: 'Inter', sans-serif; margin: 0; padding: 0; }
+        body { background-color: #000; color: #fff; margin: 0; padding: 0; overflow-x: hidden; -webkit-overflow-scrolling: touch; overscroll-behavior-x: none; }
+        body.loading { overflow: hidden !important; }
+        .app-wrapper { width: 100%; max-width: 450px; margin: 0 auto; background-color: #050505; min-height: 100vh; position: relative; box-shadow: 0 0 100px rgba(0,0,0,0.8); overscroll-behavior: none; }
+        .neon-green { color: #00ff88; }
+
+        /* ── HEADER FIXO ── */
+        header.fixed-header {
+            position: fixed; top: 0; left: 0; right: 0; width: 100%;
+            background: rgba(5,5,5,0.97); backdrop-filter: blur(14px);
+            z-index: 200; border-bottom: 1px solid #18181b;
+        }
+        header.fixed-header .header-inner {
+            max-width: 450px; margin: 0 auto;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 16px;
+        }
+        .header-spacer { height: 60px; }
+
+        /* ── LOADERS ── */
+        #main-loader { position: fixed; inset: 0; background: #050505; display: flex; flex-direction: row; align-items: center; justify-content: center; z-index: 99999; transition: transform 0.8s cubic-bezier(0.87,0,0.13,1); gap: 6px; }
+        .loader-logo-site { font-weight: 900; font-size: 32px; font-style: italic; text-transform: uppercase; }
+        .loader-hidden { transform: translateY(-100%); pointer-events: none; }
+
+        /* ── LOADER UVA ── */
+        :root { --neon-green: #00ff88; --stem-color: #2ECC71; --berry-duration: 0.3s; --berry-stagger: 0.08s; }
+        .loader-svg { width: 44px; height: auto; overflow: visible; }
+        .berry { fill: var(--neon-green); opacity: 0; filter: drop-shadow(0 0 6px var(--neon-green)); transform: translateY(10px); animation: grapeSlideIn var(--berry-duration) ease-out forwards; }
+        .b1 { animation-delay: calc(0.2s + 0 * var(--berry-stagger)); }
+        .b2 { animation-delay: calc(0.2s + 1 * var(--berry-stagger)); }
+        .b3 { animation-delay: calc(0.2s + 2 * var(--berry-stagger)); }
+        .b4 { animation-delay: calc(0.2s + 3 * var(--berry-stagger)); }
+        .b5 { animation-delay: calc(0.2s + 4 * var(--berry-stagger)); }
+        .b6 { animation-delay: calc(0.2s + 5 * var(--berry-stagger)); }
+        .b7 { animation-delay: calc(0.2s + 6 * var(--berry-stagger)); }
+        .b8 { animation-delay: calc(0.2s + 7 * var(--berry-stagger)); }
+        .b9 { animation-delay: calc(0.2s + 8 * var(--berry-stagger)); }
+        .b10 { animation-delay: calc(0.2s + 9 * var(--berry-stagger)); }
+        @keyframes grapeSlideIn { to { opacity: 1; transform: translateY(0); } }
+        .stem-leaf { stroke: var(--stem-color); stroke-width: 2; fill: none; opacity: 0; animation: grapeFadeIn 0.4s forwards; }
+        .leaf-fill { fill: var(--stem-color); opacity: 0; animation: grapeFadeIn 0.4s forwards 0.1s; }
+        @keyframes grapeFadeIn { to { opacity: 1; } }
+
+        #mj-loader { position: fixed; inset: 0; background: #050505; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 20000; }
+        #mj-loader.active { display: flex; }
+        .loader-content { display: flex; flex-direction: column; align-items: flex-end; }
+        .loader-name { font-weight: 900; font-size: 26px; font-style: italic; text-transform: uppercase; padding-right: 12px; }
+        .he-container { display: flex; gap: 6px; margin-top: -2px; height: 28px; justify-content: flex-end; width: 100%; }
+        .he { color: #00ff88; font-weight: 900; font-style: italic; opacity: 0; font-size: 21.6px; animation: pulse 0.8s ease-in-out infinite alternate; }
+        @keyframes pulse { from{opacity:.1;transform:scale(.9)} to{opacity:1;transform:scale(1.1)} }
+
+        /* ── MODAL DESCRIÇÃO ── */
+        #desc-modal { display: none; position: fixed; inset: 0; z-index: 11000; background: rgba(0,0,0,.9); backdrop-filter: blur(8px); align-items: center; justify-content: center; padding: 20px; }
+        .modal-content { background: #0c0c0e; border: 1px solid #27272a; border-top: 4px solid #00ff88; padding: 30px; border-radius: 20px; max-width: 340px; width: 100%; }
+
+        /* ── FLAGS ── */
+        .flag-btn { filter: grayscale(100%); transition: 0.3s; opacity: 0.4; cursor: pointer; width: 24px; height: 16px; border-radius: 2px; overflow: hidden; border: 1px solid #27272a; }
+        .flag-btn.active { filter: grayscale(0%); opacity: 1; border-color: #00ff88; }
+
+        /* ── PROFILE OVERLAY ── */
+        #profile-overlay { position: fixed; inset: 0; background: #050505; z-index: 10000; display: none; overflow-y: auto; }
+        #profile-overlay.open { display: block; }
+        #close-profile-btn { position: fixed; top: 50px; right: 16px; transform: translateY(-50%); z-index: 10001; background: #fff; color: #000; font-weight: 900; padding: 8px 14px; border-radius: 50px; font-size: 10px; text-transform: uppercase; cursor: pointer; line-height: 1; }
+
+        /* ── REVEAL ── */
+        .reveal-up { opacity: 0; transform: translateY(30px); transition: all 0.8s cubic-bezier(0.22,1,0.36,1); }
+        .reveal-up.active { opacity: 1; transform: translateY(0); }
+
+        .pill-card { background: rgba(24,24,27,.6); border: 1px solid #3f3f46; padding: 10px 4px; border-radius: 8px; font-size: 8px; font-weight: 800; text-transform: uppercase; color: #a1a1aa; text-align: center; display: flex; align-items: center; justify-content: center; min-height: 48px; cursor: pointer; }
+
+        /* ── HAMBURGER DRAWER ── */
+        #hamburger-menu {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            width: 100%;
+            transform: translateX(100%);
+            transition: transform 0.42s cubic-bezier(0.16,1,0.3,1);
+            background: #050505; z-index: 500;
+            overflow-y: scroll;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+        }
+        #hamburger-menu.open { transform: translateX(0); }
+
+        /* ── GALERIA SLIDER ── */
+        .gallery-slider-wrap {
+            position: relative;
+            width: 100%;
+            height: 340px;
+            overflow: hidden;
+            border-radius: 16px;
+        }
+        .gallery-slide {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        .gallery-slide .g-item {
+            width: 72px;
+            height: 108px;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            border-radius: 10px;
+            background-position: center;
+            background-size: cover;
+            transition: 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            cursor: pointer;
+        }
+        /* 1º e 2º preenchem o fundo (slide atual) */
+        .gallery-slide .g-item:nth-child(1),
+        .gallery-slide .g-item:nth-child(2) {
+            top: 0; left: 0;
+            transform: none;
+            border-radius: 16px;
+            width: 100%; height: 100%;
+        }
+        /* Thumb cards à direita */
+        .gallery-slide .g-item:nth-child(3) { left: 55%; }
+        .gallery-slide .g-item:nth-child(4) { left: calc(55% + 80px); }
+        .gallery-slide .g-item:nth-child(5) { left: calc(55% + 160px); }
+        .gallery-slide .g-item:nth-child(n+6) { left: calc(55% + 240px); opacity: 0; }
+        /* Overlay escuro no fundo */
+        .gallery-slide .g-item:nth-child(1) { filter: brightness(0.4); }
+        /* Nav buttons */
+        .gallery-nav {
+            position: absolute;
+            bottom: 14px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            z-index: 20;
+        }
+        .gallery-nav button {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            background: rgba(0,255,136,0.15);
+            color: #00ff88;
+            border: 1.5px solid #00ff88;
+            cursor: pointer;
+            font-size: 13px;
+            transition: 0.25s;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .gallery-nav button:hover { background: #00ff88; color: #000; }
+
+        /* ── LIGHTBOX ── */
+        #lightbox { display: none; position: fixed; inset: 0; z-index: 60000; background: rgba(0,0,0,.96); backdrop-filter: blur(8px); align-items: center; justify-content: center; }
+        #lightbox.open { display: flex; }
+        #lightbox img { max-width: 92vw; max-height: 86vh; border-radius: 8px; object-fit: contain; }
+        #lb-close { position: absolute; top: 18px; right: 18px; background: #fff; color: #000; border: none; border-radius: 50%; width: 36px; height: 36px; font-weight: 900; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 1; }
+
+        /* ── CTA FLUTUANTE NA BORDA ── */
+        .cta-border-bar {
+            background: #050505;
+            padding: 0 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 10;
+        }
+        .cta-border-btn {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            background: #00ff88; color: #000;
+            font-size: 10px; font-weight: 900; letter-spacing: 0.2em; text-transform: uppercase;
+            padding: 14px 20px; border-radius: 50px; width: 100%;
+            border: none; cursor: pointer; text-decoration: none;
+            box-shadow: 0 0 32px rgba(0,255,136,0.25);
+            transform: translateY(-50%);
+            transition: background 0.25s, box-shadow 0.25s;
+        }
+        .cta-border-btn:hover { background: #fff; box-shadow: 0 0 40px rgba(0,255,136,0.4); }
+        .map-wrap { width: 100%; height: 260px; border-radius: 20px; overflow: hidden; border: 1px solid #00ff88; box-shadow: 0 0 30px rgba(0,255,136,0.12), 0 0 0 1px rgba(0,255,136,0.08); position: relative; }
+        .map-wrap iframe { width: 100%; height: 100%; border: none; display: block; filter: invert(90%) hue-rotate(180deg) saturate(0.9) brightness(0.85); }
+        .map-wrap::after { content:""; position:absolute; inset:0; border-radius:20px; box-shadow: inset 0 0 0 1px rgba(0,255,136,0.25); pointer-events:none; }
+
+        /* ── MENU NAV ── */
+        .menu-nav-item { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid #18181b; cursor: pointer; }
+        .menu-nav-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: #a1a1aa; transition: color 0.2s; }
+        .menu-nav-item:hover .menu-nav-label { color: #00ff88; }
+        .menu-nav-arrow { color: #3f3f46; font-size: 9px; transition: transform 0.3s, color 0.2s; }
+        .menu-nav-item.sub-open .menu-nav-arrow { transform: rotate(90deg); color: #00ff88; }
+        .menu-sub { display: none; padding: 14px 0 6px; }
+        .menu-sub.open { display: block; }
+
+        /* ── REVIEWS CARROSSEL ── */
+        .reviews-track-wrap { overflow: hidden; padding: 4px 0 8px; }
+        .reviews-track { display: flex; gap: 8px; width: max-content; animation: scrollLeft 22s linear infinite; }
+        @keyframes scrollLeft { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        .review-card {
+            flex-shrink: 0;
+            background: rgba(24,24,27,0.8);
+            border: 1px solid #3f3f46;
+            border-radius: 20px;
+            padding: 8px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            max-width: 200px;
+        }
+        .review-top   { display: flex; align-items: center; gap: 6px; }
+        .review-stars { color: #00ff88; font-size: 8px; letter-spacing: 1px; flex-shrink: 0; }
+        .review-name  { font-size: 10px; font-weight: 900; color: #e4e4e7; text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .review-comment { font-size: 9.5px; color: #a1a1aa; font-style: italic; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        /* ── AGENDA MODAL ── */
+        #agenda-modal { display: none; position: fixed; inset: 0; z-index: 12000; background: rgba(0,0,0,.92); backdrop-filter: blur(10px); align-items: flex-end; justify-content: center; padding: 0; }
+        #agenda-modal.open { display: flex; }
+        .agenda-sheet { background: #0c0c0e; border: 1px solid #27272a; border-top: 3px solid #00ff88; border-radius: 20px 20px 0 0; width: 100%; max-width: 450px; padding: 28px 20px 36px; }
+        .agenda-field { width: 100%; background: #18181b; border: 1px solid #27272a; border-radius: 10px; padding: 13px 14px; color: #fff; font-size: 13px; font-family: inherit; outline: none; margin-bottom: 10px; box-sizing: border-box; }
+        .agenda-field:focus { border-color: #00ff88; }
+        .agenda-field::placeholder { color: #52525b; }
+
+        /* ── PARCEIROS ── */
+        .partner-pill {
+            display: inline-block;
+            background: rgba(24,24,27,0.7);
+            border: 1px solid #3f3f46;
+            color: #a1a1aa;
+            font-size: 8.5px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            padding: 5px 10px;
+            border-radius: 999px;
+            white-space: nowrap;
+            transition: border-color 0.2s, color 0.2s;
+        }
+        .partner-pill:hover { border-color: #00ff88; color: #fff; }
+    </style>
+</head>
+<body class="loading">
+
+<!-- LOADERS -->
+<div id="main-loader">
+    <div class="loader-logo-site">SF<span class="neon-green">FRUITS</span></div>
+    <svg class="loader-svg" viewBox="0 0 100 130" xmlns="http://www.w3.org/2000/svg">
+        <path class="leaf-fill" d="M50 35 Q65 15 50 5 Q35 15 50 35 Z" />
+        <g>
+            <circle class="berry b1" cx="26" cy="50" r="7" />
+            <circle class="berry b2" cx="42" cy="50" r="7" />
+            <circle class="berry b3" cx="58" cy="50" r="7" />
+            <circle class="berry b4" cx="74" cy="50" r="7" />
+            <circle class="berry b5" cx="34" cy="65" r="7" />
+            <circle class="berry b6" cx="50" cy="65" r="7" />
+            <circle class="berry b7" cx="66" cy="65" r="7" />
+            <circle class="berry b8" cx="42" cy="80" r="7" />
+            <circle class="berry b9" cx="58" cy="80" r="7" />
+            <circle class="berry b10" cx="50" cy="95" r="7" />
+        </g>
+    </svg>
+</div>
+<div id="mj-loader">
+    <div class="loader-content">
+        <div class="loader-name">MICHEL <span class="neon-green">JACKSON</span></div>
+        <div class="he-container"><span class="he" style="animation-delay:.1s">he</span><span class="he" style="animation-delay:.4s">he</span></div>
+    </div>
+</div>
+
+<!-- MODAL DESCRIÇÃO -->
+<div id="desc-modal" onclick="closeModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <h4 id="modal-title" class="text-[#00ff88] font-black uppercase italic text-xl mb-4"></h4>
+        <p id="modal-text" class="text-zinc-400 text-[16px] leading-relaxed italic"></p>
+        <button onclick="closeModal()" class="mt-8 w-full py-4 bg-white text-black text-[12.7px] font-black uppercase tracking-widest rounded-xl">Fechar</button>
+    </div>
+</div>
+
+
+<!-- AGENDA MODAL -->
+<div id="agenda-modal" onclick="closeAgenda(event)">
+    <div class="agenda-sheet" onclick="event.stopPropagation()">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-[15px] font-black uppercase italic text-white">Agendar uma visita</h3>
+            <button onclick="closeAgenda()" style="background:#27272a;border:none;color:#fff;width:30px;height:30px;border-radius:50%;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:900;">✕</button>
+        </div>
+        <input class="agenda-field" id="ag-nome" placeholder="Seu nome completo" type="text">
+        <input class="agenda-field" id="ag-empresa" placeholder="Nome da empresa" type="text">
+        <input class="agenda-field" id="ag-cargo" placeholder="Cargo / Função" type="text">
+        <input class="agenda-field" id="ag-data" placeholder="Data preferida para visita" type="text" onfocus="this.type='date'" onblur="if(!this.value)this.type='text'">
+        <input class="agenda-field" id="ag-tel" placeholder="Seu WhatsApp (com DDD)" type="tel">
+        <button onclick="enviarAgenda()" style="width:100%;background:#00ff88;color:#000;font-weight:900;font-size:11px;text-transform:uppercase;letter-spacing:.15em;padding:16px;border-radius:12px;border:none;cursor:pointer;margin-top:4px;transition:background .2s;" onmouseover="this.style.background='#fff'" onmouseout="this.style.background='#00ff88'">
+            Enviar pelo WhatsApp
+        </button>
+    </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div id="lightbox" onclick="closeLightbox()">
+    <button id="lb-close" onclick="closeLightbox()">✕</button>
+    <img id="lb-img" src="" alt="">
+</div>
+
+<!-- ══ MENU HAMBÚRGUER ══ -->
+<div id="hamburger-menu">
+    <!-- Header do menu -->
+    <div class="sticky top-0 px-5 pt-5 pb-4 flex items-center justify-between border-b border-zinc-900 bg-[#050505] z-10" style="max-width:450px;margin:0 auto">
+        <div class="font-black italic text-xl">SF<span class="neon-green">FRUITS</span></div>
+        <button onclick="closeHamburger()" class="w-9 h-9 flex flex-col items-center justify-center gap-[5px]" aria-label="Fechar menu">
+            <span style="display:block;width:20px;height:1.5px;background:#fff;transform:rotate(45deg);translate:0 6.5px"></span>
+            <span style="display:block;width:20px;height:1.5px;background:#fff;opacity:0"></span>
+            <span style="display:block;width:20px;height:1.5px;background:#fff;transform:rotate(-45deg);translate:0 -6.5px"></span>
+        </button>
+    </div>
+
+    <div class="px-5 py-5" style="max-width:450px;margin:0 auto">
+        <!-- BOTÃO CONTATO DESTAQUE -->
+        <a href="https://wa.me/557481206296" class="flex items-center justify-center gap-2 bg-[#00ff88] text-black text-[12.7px] font-black uppercase tracking-widest px-5 py-4 rounded-xl w-full mb-6 hover:bg-white transition-colors duration-300" onclick="closeHamburger()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"/></svg>
+            Contato · WhatsApp
+        </a>
+
+        <!-- Sobre -->
+        <div class="menu-nav-item" id="nav-sobre" onclick="toggleSub('sub-sobre','nav-sobre')">
+            <span class="menu-nav-label">Sobre</span>
+            <span class="menu-nav-arrow">▶</span>
+        </div>
+        <div id="sub-sobre" class="menu-sub">
+            <div class="mb-5">
+                <p class="text-[10.4px] font-black text-[#00ff88] uppercase tracking-[0.3em] mb-3 italic">A Empresa</p>
+                <p class="text-zinc-400 text-[12px] leading-relaxed italic mb-3">A SF Frutas é resultado da união de duas famílias com experiência e tradição no Brasil.</p>
+                <p class="text-zinc-500 text-[12.7px] leading-relaxed italic mb-5">Nosso compromisso vai além da produção: entregamos confiança, qualidade e relações duradouras, com tecnologia e gestão eficiente no campo.</p>
+            </div>
+            <div class="border border-zinc-800 border-l-2 border-l-[#00ff88] rounded-xl p-4 mb-3">
+                <p class="text-[10.4px] font-black text-[#00ff88] uppercase tracking-widest mb-2 italic">Nossa Missão</p>
+                <p class="text-zinc-400 text-[12.7px] leading-relaxed italic">Produzir frutas de qualidade de forma sustentável, com impacto socioeconômico positivo para toda a comunidade.</p>
+            </div>
+            <div class="border border-zinc-800 border-l-2 border-l-[#00ff88] rounded-xl p-4 mb-2">
+                <p class="text-[10.4px] font-black text-[#00ff88] uppercase tracking-widest mb-2 italic">Nossa Visão</p>
+                <p class="text-zinc-400 text-[12.7px] leading-relaxed italic">Ser reconhecida como uma empresa que produz frutas de excelente qualidade, com gestão transparente e responsável com o meio ambiente e funcionários. Capacitar as pessoas para que melhorem suas vidas e construam um futuro melhor para todos.</p>
+            </div>
+        </div>
+
+        <!-- Diferenciais -->
+        <div class="menu-nav-item" id="nav-dif" onclick="toggleSub('sub-dif','nav-dif')">
+            <span class="menu-nav-label">Por que escolher a SF<span style="color:#00ff88;">FRUITS</span>?</span>
+            <span class="menu-nav-arrow">▶</span>
+        </div>
+        <div id="sub-dif" class="menu-sub">
+            <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:8px;">
+                <div style="border:1px solid #3f3f46;border-radius:14px;padding:14px;"><div style="display:flex;flex-direction:row;gap:10px;align-items:flex-start;"><span style="font-size:20px;line-height:1;flex-shrink:0;margin-top:1px;">🌱</span><div style="min-width:0;"><p style="font-size:11px;font-weight:900;text-transform:uppercase;font-style:italic;color:#fff;margin:0 0 5px;">Produção de Alta Qualidade</p><p style="font-size:10px;color:#71717a;line-height:1.5;margin:0;">Frutas selecionadas com padrão elevado desde o plantio até a entrega.</p></div></div></div>
+                <div style="border:1px solid #3f3f46;border-radius:14px;padding:14px;"><div style="display:flex;flex-direction:row;gap:10px;align-items:flex-start;"><span style="font-size:20px;line-height:1;flex-shrink:0;margin-top:1px;">⚙️</span><div style="min-width:0;"><p style="font-size:11px;font-weight:900;text-transform:uppercase;font-style:italic;color:#fff;margin:0 0 5px;">Agricultura de Precisão</p><p style="font-size:10px;color:#71717a;line-height:1.5;margin:0;">Tecnologia aplicada para maximizar sabor, produtividade e consistência.</p></div></div></div>
+                <div style="border:1px solid #3f3f46;border-radius:14px;padding:14px;"><div style="display:flex;flex-direction:row;gap:10px;align-items:flex-start;"><span style="font-size:20px;line-height:1;flex-shrink:0;margin-top:1px;">👨‍🌾</span><div style="min-width:0;"><p style="font-size:11px;font-weight:900;text-transform:uppercase;font-style:italic;color:#fff;margin:0 0 5px;">Equipe Especializada</p><p style="font-size:10px;color:#71717a;line-height:1.5;margin:0;">Profissionais treinados em cada etapa do cultivo.</p></div></div></div>
+                <div style="border:1px solid #3f3f46;border-radius:14px;padding:14px;"><div style="display:flex;flex-direction:row;gap:10px;align-items:flex-start;"><span style="font-size:20px;line-height:1;flex-shrink:0;margin-top:1px;">🤝</span><div style="min-width:0;"><p style="font-size:11px;font-weight:900;text-transform:uppercase;font-style:italic;color:#fff;margin:0 0 5px;">Relacionamento de Confiança</p><p style="font-size:10px;color:#71717a;line-height:1.5;margin:0;">Parcerias sólidas com clientes e comunidade.</p></div></div></div>
+            </div>
+        </div>
+
+        <!-- Benefícios -->
+        <div class="menu-nav-item" id="nav-ben" onclick="toggleSub('sub-ben','nav-ben')">
+            <span class="menu-nav-label">Benefícios</span>
+            <span class="menu-nav-arrow">▶</span>
+        </div>
+        <div id="sub-ben" class="menu-sub">
+            <div class="grid grid-cols-2 gap-2 mb-2">
+                <div class="bg-zinc-900/60 border border-zinc-800 rounded-xl p-3"><p class="text-[#00ff88] font-black text-[10.4px] mb-1">✔</p><p class="text-[10.4px] font-bold text-zinc-300 uppercase leading-tight">Mais qualidade no produto final</p></div>
+                <div class="bg-zinc-900/60 border border-zinc-800 rounded-xl p-3"><p class="text-[#00ff88] font-black text-[10.4px] mb-1">✔</p><p class="text-[10.4px] font-bold text-zinc-300 uppercase leading-tight">Padronização e confiabilidade</p></div>
+                <div class="bg-zinc-900/60 border border-zinc-800 rounded-xl p-3"><p class="text-[#00ff88] font-black text-[10.4px] mb-1">✔</p><p class="text-[10.4px] font-bold text-zinc-300 uppercase leading-tight">Atendimento direto e ágil</p></div>
+                <div class="bg-zinc-900/60 border border-zinc-800 rounded-xl p-3"><p class="text-[#00ff88] font-black text-[10.4px] mb-1">✔</p><p class="text-[10.4px] font-bold text-zinc-300 uppercase leading-tight">Parceria de longo prazo</p></div>
+            </div>
+        </div>
+
+        <!-- Elite Técnica -->
+        <div class="menu-nav-item" id="nav-elite" onclick="toggleSub('sub-elite','nav-elite')">
+            <span class="menu-nav-label">Elite Técnica</span>
+            <span class="menu-nav-arrow">▶</span>
+        </div>
+        <div id="sub-elite" class="menu-sub">
+            <p class="text-[11.5px] text-zinc-600 italic mb-4">Toque em cada profissional para ver o perfil completo.</p>
+            <div class="grid grid-cols-3 gap-3 mb-2" id="menu-elite-grid"></div>
+        </div>
+
+        <!-- Galeria -->
+        <div class="menu-nav-item" id="nav-gal" onclick="toggleSub('sub-gal','nav-gal')">
+            <span class="menu-nav-label">Galeria</span>
+            <span class="menu-nav-arrow">▶</span>
+        </div>
+        <div id="sub-gal" class="menu-sub">
+            <div class="gallery-grid" id="menu-gallery"></div>
+        </div>
+
+        <!-- Localização -->
+        <div class="menu-nav-item" id="nav-loc" onclick="toggleSub('sub-loc','nav-loc')">
+            <span class="menu-nav-label">Localização</span>
+            <span class="menu-nav-arrow">▶</span>
+        </div>
+        <div id="sub-loc" class="menu-sub pb-4">
+            <div style="display:flex;align-items:center;gap:12px;background:#111;border:1px solid #27272a;border-radius:14px;padding:14px 16px;">
+                <div style="width:38px;height:38px;border-radius:50%;background:rgba(0,255,136,0.1);border:1px solid rgba(0,255,136,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#00ff88" viewBox="0 0 16 16"><path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/></svg>
+                </div>
+                <div style="flex:1;">
+                    <p style="font-size:10.5px;font-weight:900;color:#fff;text-transform:uppercase;letter-spacing:0.05em;margin:0 0 2px;">SF Fruits</p>
+                    <p style="font-size:10px;color:#71717a;font-style:italic;margin:0;">Projeto Pontal Sul — Estr. Canal Principal<br>Zona Rural, Petrolina, PE · 56334-899</p>
+                </div>
+                <a href="https://maps.app.goo.gl/6AaJPngegz1RdrqV7" target="_blank" style="flex-shrink:0;background:#00ff88;color:#000;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;padding:7px 14px;border-radius:20px;text-decoration:none;white-space:nowrap;">Abrir</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══ APP WRAPPER ══ -->
+<div class="app-wrapper">
+
+    <!-- HEADER FIXO -->
+    <header class="fixed-header reveal-up">
+        <div class="header-inner">
+            <div class="flex items-center gap-3">
+                <div class="font-black italic text-xl">SF<span class="neon-green">FRUITS</span></div>
+                <div class="flex gap-2 border-l border-zinc-800 pl-3">
+                    <div onclick="setLang('pt')" id="lang-pt" class="flag-btn active"><img src="https://flagcdn.com/h40/br.png" class="w-full h-full object-cover"></div>
+                    <div onclick="setLang('es')" id="lang-es" class="flag-btn"><img src="https://flagcdn.com/h40/cl.png" class="w-full h-full object-cover"></div>
+                    <div onclick="setLang('en')" id="lang-en" class="flag-btn"><img src="https://flagcdn.com/h40/us.png" class="w-full h-full object-cover"></div>
+                </div>
+            </div>
+            <!-- HAMBÚRGUER BTN -->
+            <button id="ham-btn" onclick="openHamburger()" aria-label="Menu" class="flex flex-col items-end justify-center gap-[5px] w-9 h-9">
+                <span style="display:block;width:20px;height:1.5px;background:#fff;border-radius:2px"></span>
+                <span style="display:block;width:20px;height:1.5px;background:#fff;border-radius:2px"></span>
+                <span style="display:block;width:12px;height:1.5px;background:#00ff88;border-radius:2px"></span>
+            </button>
+        </div>
+    </header>
+    <div class="header-spacer"></div>
+
+    <!-- ══ HERO ══ -->
+    <section class="pt-12 pb-8 px-6 border-b border-zinc-900 reveal-up" style="position:relative;overflow:hidden;">
+        <video
+            src="https://res.cloudinary.com/dwrq06fta/video/upload/v1774370821/uva_clkgyn.webm"
+            autoplay loop muted playsinline
+            style="position:absolute;top:8px;right:-30px;width:230px;border-radius:12px;pointer-events:none;z-index:0;">
+        </video>
+        <h1 class="text-[23px] font-black uppercase italic leading-[0.92] mb-5 tracking-tighter" style="position:relative;z-index:1;">Uva <span class="neon-green">Premium</span><br>cultivadas com<br>precisão e confiança.</h1>
+        <p class="text-zinc-400 text-[13.8px] leading-relaxed italic hero-sub" style="position:relative;z-index:1;">Da união de duas famílias nasce uma produção de alta qualidade, com tecnologia, cuidado e padrão profissional em cada colheita.</p>
+    </section>
+
+    <div class="px-6 pt-6 pb-2 text-center">
+        <div style="width:100%;border-radius:16px;overflow:hidden;border:1px solid #27272a;margin-bottom:24px;aspect-ratio:16/9;">
+            <img src="https://sffruits.com.br/wp-content/uploads/2022/02/SF-Fruits-Grapes-12.jpg" alt="SF Fruits Grapes" style="width:100%;height:100%;object-fit:cover;display:block;">
+        </div>
+        <p class="text-[17.3px] font-black uppercase italic leading-tight tracking-tighter text-white headline-txt">Qualidade que você <span class="neon-green">confia,</span><br>parceria que você <span class="neon-green">mantém.</span></p>
+    </div>
+
+    <!-- ══ PROVA DE VALOR ══ -->
+    <section class="pt-2 pb-8 px-6 border-b border-zinc-900 reveal-up">
+        <div class="flex flex-col gap-3">
+            <div class="flex items-center gap-3"><span class="text-[#00ff88] font-black text-[12.7px]">✔</span><span class="text-[12.7px] font-bold text-zinc-300 uppercase tracking-wide valor-item">Produção com agricultura de precisão</span></div>
+            <div class="flex items-center gap-3"><span class="text-[#00ff88] font-black text-[12.7px]">✔</span><span class="text-[12.7px] font-bold text-zinc-300 uppercase tracking-wide valor-item">Equipe altamente qualificada</span></div>
+            <div class="flex items-center gap-3"><span class="text-[#00ff88] font-black text-[12.7px]">✔</span><span class="text-[12.7px] font-bold text-zinc-300 uppercase tracking-wide valor-item">Controle de qualidade em todas as etapas</span></div>
+            <div class="flex items-center gap-3"><span class="text-[#00ff88] font-black text-[12.7px]">✔</span><span class="text-[12.7px] font-bold text-zinc-300 uppercase tracking-wide valor-item">Relacionamento direto e transparente</span></div>
+        </div>
+        <a href="https://wa.me/557481206296" class="flex items-center justify-center gap-2 bg-[#00ff88] text-black text-[11.5px] font-black uppercase tracking-widest px-6 py-4 rounded-xl w-full mt-6 hover:bg-white transition-colors duration-300"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"/></svg><span class="cta-wa-txt">Solicitar orçamento no WhatsApp</span></a>
+    </section>
+    <!-- ══ ELITE TÉCNICA (onde era o Sobre) ══ -->
+    <section class="py-14 px-6 bg-black border-b border-zinc-900 reveal-up">
+        <h2 class="text-[15px] font-black text-[#00ff88] uppercase tracking-[0.3em] mb-10 text-center italic text-center" id="sec-elite">Elite Técnica</h2>
+        <div class="grid grid-cols-3 gap-x-3 gap-y-8">
+            <!-- Michel -->
+            <div onclick="openProfile('michel')" class="text-center group cursor-pointer">
+                <img src="https://res.cloudinary.com/dwrq06fta/image/upload/f_auto,q_auto/Novo_projeto_264_35A9E47_jvwsk2.png" class="w-20 h-20 mx-auto mb-3 rounded-full border-2 border-zinc-800 group-hover:border-[#00ff88] object-cover transition-colors duration-200">
+                <p class="text-[11.5px] font-black uppercase italic leading-tight">Michel Jackson</p>
+                <p class="text-[9.2px] text-zinc-500 font-bold uppercase mt-0.5">Produção</p>
+            </div>
+            <!-- Ana -->
+            <div onclick="openProfile('ana')" class="text-center group cursor-pointer">
+                <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&q=80" class="w-20 h-20 mx-auto mb-3 rounded-full border-2 border-zinc-800 group-hover:border-[#00ff88] object-cover transition-colors duration-200">
+                <p class="text-[11.5px] font-black uppercase italic leading-tight">Ana Beatriz</p>
+                <p class="text-[9.2px] text-zinc-500 font-bold uppercase mt-0.5">Qualidade</p>
+            </div>
+            <!-- Ricardo -->
+            <div onclick="openProfile('ricardo')" class="text-center group cursor-pointer">
+                <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&q=80" class="w-20 h-20 mx-auto mb-3 rounded-full border-2 border-zinc-800 group-hover:border-[#00ff88] object-cover transition-colors duration-200">
+                <p class="text-[11.5px] font-black uppercase italic leading-tight">Ricardo Santos</p>
+                <p class="text-[9.2px] text-zinc-500 font-bold uppercase mt-0.5">Logística</p>
+            </div>
+            <!-- Carlos -->
+            <div onclick="openProfile('carlos')" class="text-center group cursor-pointer">
+                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80" class="w-20 h-20 mx-auto mb-3 rounded-full border-2 border-zinc-800 group-hover:border-[#00ff88] object-cover transition-colors duration-200">
+                <p class="text-[11.5px] font-black uppercase italic leading-tight">Carlos Oliveira</p>
+                <p class="text-[9.2px] text-zinc-500 font-bold uppercase mt-0.5">Agronomia</p>
+            </div>
+            <!-- Fernanda (nova) -->
+            <div onclick="openProfile('fernanda')" class="text-center group cursor-pointer">
+                <img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200&q=80" class="w-20 h-20 mx-auto mb-3 rounded-full border-2 border-zinc-800 group-hover:border-[#00ff88] object-cover transition-colors duration-200">
+                <p class="text-[11.5px] font-black uppercase italic leading-tight">Fernanda Lima</p>
+                <p class="text-[9.2px] text-zinc-500 font-bold uppercase mt-0.5">Exportação</p>
+            </div>
+            <!-- Pedro (novo) -->
+            <div onclick="openProfile('pedro')" class="text-center group cursor-pointer">
+                <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&q=80" class="w-20 h-20 mx-auto mb-3 rounded-full border-2 border-zinc-800 group-hover:border-[#00ff88] object-cover transition-colors duration-200">
+                <p class="text-[11.5px] font-black uppercase italic leading-tight">Pedro Maia</p>
+                <p class="text-[9.2px] text-zinc-500 font-bold uppercase mt-0.5">Irrigação</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ══ DIFERENCIAIS ══ -->
+    <section class="py-14 px-6 border-b border-zinc-900 reveal-up">
+        <h2 style="font-size:15px;font-weight:900;text-transform:uppercase;letter-spacing:0.3em;margin-bottom:32px;font-style:italic;text-align:center;" id="sec-dif">Por que escolher a <span style="color:#fff;">SF</span><span style="color:#00ff88;">FRUITS</span>?</h2>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div style="border:1px solid #3f3f46;border-radius:14px;padding:14px;transition:border-color 0.3s;"><div style="display:flex;flex-direction:row;gap:10px;align-items:flex-start;"><span style="font-size:20px;line-height:1;flex-shrink:0;margin-top:1px;">🍇</span><div style="min-width:0;"><p style="font-size:11px;font-weight:900;text-transform:uppercase;font-style:italic;color:#fff;margin:0 0 5px;">Variedades Premium</p><p style="font-size:10px;color:#71717a;line-height:1.5;margin:0;">Seleção de castas nobres como Thompson, Crimson, Red Globe e Vitis vinifera de alta valorização de mercado.</p></div></div></div>
+            <div style="border:1px solid #3f3f46;border-radius:14px;padding:14px;transition:border-color 0.3s;"><div style="display:flex;flex-direction:row;gap:10px;align-items:flex-start;"><span style="font-size:20px;line-height:1;flex-shrink:0;margin-top:1px;">🌿</span><div style="min-width:0;"><p style="font-size:11px;font-weight:900;text-transform:uppercase;font-style:italic;color:#fff;margin:0 0 5px;">Manejo Sustentável</p><p style="font-size:10px;color:#71717a;line-height:1.5;margin:0;">Práticas agrícolas que preservam o solo, a água e a biodiversidade local.</p></div></div></div>
+            <div style="border:1px solid #3f3f46;border-radius:14px;padding:14px;transition:border-color 0.3s;"><div style="display:flex;flex-direction:row;gap:10px;align-items:flex-start;"><span style="font-size:20px;line-height:1;flex-shrink:0;margin-top:1px;">📦</span><div style="min-width:0;"><p style="font-size:11px;font-weight:900;text-transform:uppercase;font-style:italic;color:#fff;margin:0 0 5px;">Logística Integrada</p><p style="font-size:10px;color:#71717a;line-height:1.5;margin:0;">Cold chain desde a colheita até a gôndola, garantindo frescor e vida útil prolongada.</p></div></div></div>
+            <div style="border:1px solid #3f3f46;border-radius:14px;padding:14px;transition:border-color 0.3s;"><div style="display:flex;flex-direction:row;gap:10px;align-items:flex-start;"><span style="font-size:20px;line-height:1;flex-shrink:0;margin-top:1px;">🏆</span><div style="min-width:0;"><p style="font-size:11px;font-weight:900;text-transform:uppercase;font-style:italic;color:#fff;margin:0 0 5px;">Certificações Internacionais</p><p style="font-size:10px;color:#71717a;line-height:1.5;margin:0;">Padrões GlobalGAP, GRASP e HACCP para exportação e mercados exigentes.</p></div></div></div>
+            <div style="border:1px solid #3f3f46;border-radius:14px;padding:14px;transition:border-color 0.3s;"><div style="display:flex;flex-direction:row;gap:10px;align-items:flex-start;"><span style="font-size:20px;line-height:1;flex-shrink:0;margin-top:1px;">💧</span><div style="min-width:0;"><p style="font-size:11px;font-weight:900;text-transform:uppercase;font-style:italic;color:#fff;margin:0 0 5px;">Irrigação de Precisão</p><p style="font-size:10px;color:#71717a;line-height:1.5;margin:0;">Sistemas de gotejamento e monitoramento de umidade para uso eficiente da água.</p></div></div></div>
+            <div style="border:1px solid #3f3f46;border-radius:14px;padding:14px;transition:border-color 0.3s;"><div style="display:flex;flex-direction:row;gap:10px;align-items:flex-start;"><span style="font-size:20px;line-height:1;flex-shrink:0;margin-top:1px;">🔬</span><div style="min-width:0;"><p style="font-size:11px;font-weight:900;text-transform:uppercase;font-style:italic;color:#fff;margin:0 0 5px;">Laboratório Próprio</p><p style="font-size:10px;color:#71717a;line-height:1.5;margin:0;">Análises de maturação, BRIX e sanidade para colheita no ponto ideal.</p></div></div></div>
+            <div style="border:1px solid #3f3f46;border-radius:14px;padding:14px;transition:border-color 0.3s;"><div style="display:flex;flex-direction:row;gap:10px;align-items:flex-start;"><span style="font-size:20px;line-height:1;flex-shrink:0;margin-top:1px;">📊</span><div style="min-width:0;"><p style="font-size:11px;font-weight:900;text-transform:uppercase;font-style:italic;color:#fff;margin:0 0 5px;">Rastreabilidade Total</p><p style="font-size:10px;color:#71717a;line-height:1.5;margin:0;">Cada caixa identificada com origem, lote e data de colheita.</p></div></div></div>
+            <div style="border:1px solid #3f3f46;border-radius:14px;padding:14px;transition:border-color 0.3s;"><div style="display:flex;flex-direction:row;gap:10px;align-items:flex-start;"><span style="font-size:20px;line-height:1;flex-shrink:0;margin-top:1px;">🤖</span><div style="min-width:0;"><p style="font-size:11px;font-weight:900;text-transform:uppercase;font-style:italic;color:#fff;margin:0 0 5px;">Automação na Pós-Colheita</p><p style="font-size:10px;color:#71717a;line-height:1.5;margin:0;">Seleção óptica e embalagem automatizada para padronização visual.</p></div></div></div>
+            <div style="border:1px solid #3f3f46;border-radius:14px;padding:14px;transition:border-color 0.3s;"><div style="display:flex;flex-direction:row;gap:10px;align-items:flex-start;"><span style="font-size:20px;line-height:1;flex-shrink:0;margin-top:1px;">🌞</span><div style="min-width:0;"><p style="font-size:11px;font-weight:900;text-transform:uppercase;font-style:italic;color:#fff;margin:0 0 5px;">Terroir Favorável</p><p style="font-size:10px;color:#71717a;line-height:1.5;margin:0;">Região com amplitude térmica ideal para acúmulo de açúcar e cor intensa.</p></div></div></div>
+            <div style="border:1px solid #3f3f46;border-radius:14px;padding:14px;transition:border-color 0.3s;"><div style="display:flex;flex-direction:row;gap:10px;align-items:flex-start;"><span style="font-size:20px;line-height:1;flex-shrink:0;margin-top:1px;">🚚</span><div style="min-width:0;"><p style="font-size:11px;font-weight:900;text-transform:uppercase;font-style:italic;color:#fff;margin:0 0 5px;">Entrega Just in Time</p><p style="font-size:10px;color:#71717a;line-height:1.5;margin:0;">Programação de colheita alinhada à demanda do cliente para máxima frescura.</p></div></div></div>
+        </div>
+    </section>
+
+    <!-- ══ BENEFÍCIOS ══ -->
+    <section class="py-14 px-6 bg-black border-b border-zinc-900 reveal-up">
+        <h2 class="text-[15px] font-black text-[#00ff88] uppercase tracking-[0.3em] mb-8 italic text-center" id="sec-ben">Benefícios</h2>
+        <div class="grid grid-cols-2 gap-3">
+            <div class="bg-zinc-900/60 border border-zinc-800 rounded-xl p-4"><p class="text-[#00ff88] font-black text-[11.5px] mb-1">✔</p><p class="text-[11.5px] font-bold text-zinc-300 uppercase leading-tight">Mais qualidade no seu produto final</p></div>
+            <div class="bg-zinc-900/60 border border-zinc-800 rounded-xl p-4"><p class="text-[#00ff88] font-black text-[11.5px] mb-1">✔</p><p class="text-[11.5px] font-bold text-zinc-300 uppercase leading-tight">Padronização e confiabilidade na entrega</p></div>
+            <div class="bg-zinc-900/60 border border-zinc-800 rounded-xl p-4"><p class="text-[#00ff88] font-black text-[11.5px] mb-1">✔</p><p class="text-[11.5px] font-bold text-zinc-300 uppercase leading-tight">Atendimento direto e ágil</p></div>
+            <div class="bg-zinc-900/60 border border-zinc-800 rounded-xl p-4"><p class="text-[#00ff88] font-black text-[11.5px] mb-1">✔</p><p class="text-[11.5px] font-bold text-zinc-300 uppercase leading-tight">Parceria de longo prazo</p></div>
+        </div>
+    </section>
+
+    <!-- ══ GALERIA SLIDER ══ -->
+    <section class="py-14 px-4 border-b border-zinc-900 reveal-up">
+        <h2 class="text-[15px] font-black text-[#00ff88] uppercase tracking-[0.3em] mb-6 italic text-center" id="sec-gal">Galeria</h2>
+        <div class="gallery-slider-wrap">
+            <div class="gallery-slide" id="page-gallery"></div>
+            <div class="gallery-nav">
+                <button id="gal-prev"><i class="fa-solid fa-arrow-left"></i></button>
+                <button id="gal-next"><i class="fa-solid fa-arrow-right"></i></button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ══ PROVA SOCIAL ══ -->
+    <section class="py-14 bg-black border-b border-zinc-900 reveal-up" id="section-reviews">
+        <h2 class="text-[12.7px] font-black text-[#00ff88] uppercase tracking-[0.3em] mb-8 italic px-6 text-center" id="sec-social">O que dizem</h2>
+        <div class="reviews-track-wrap" id="reviews-wrap">
+            <div class="reviews-track" id="reviews-track">
+                <div class="review-card"><div class="review-top"><span class="review-stars">★★★★★</span><span class="review-name">Grupo Carrefour</span></div><span class="review-comment">"Parceria sólida, frutas com padrão premium consistente."</span></div>
+                <div class="review-card"><div class="review-top"><span class="review-stars">★★★★★</span><span class="review-name">Ceasaminas</span></div><span class="review-comment">"Qualidade e pontualidade em todas as entregas."</span></div>
+                <div class="review-card"><div class="review-top"><span class="review-stars">★★★★★</span><span class="review-name">Rio SF Exportação</span></div><span class="review-comment">"Confiança e rastreabilidade do campo ao destino."</span></div>
+                <div class="review-card"><div class="review-top"><span class="review-stars">★★★★★</span><span class="review-name">Frutivale</span></div><span class="review-comment">"Equipe técnica diferenciada, resultado visível na colheita."</span></div>
+                <div class="review-card"><div class="review-top"><span class="review-stars">★★★★★</span><span class="review-name">Agrícola Famosa</span></div><span class="review-comment">"Padrão de exportação que abre portas no mercado global."</span></div>
+                <div class="review-card"><div class="review-top"><span class="review-stars">★★★★★</span><span class="review-name">Syscrop</span></div><span class="review-comment">"Gestão eficiente e produto sempre no ponto ideal."</span></div>
+                <div class="review-card"><div class="review-top"><span class="review-stars">★★★★★</span><span class="review-name">AgroStar</span></div><span class="review-comment">"Parceiros que entendem de qualidade e entregam sempre."</span></div>
+                <div class="review-card"><div class="review-top"><span class="review-stars">★★★★★</span><span class="review-name">Vale Fértil</span></div><span class="review-comment">"Relacionamento transparente e produto de excelência."</span></div>
+                <!-- duplicatas -->
+                <div class="review-card"><div class="review-top"><span class="review-stars">★★★★★</span><span class="review-name">Grupo Carrefour</span></div><span class="review-comment">"Parceria sólida, frutas com padrão premium consistente."</span></div>
+                <div class="review-card"><div class="review-top"><span class="review-stars">★★★★★</span><span class="review-name">Ceasaminas</span></div><span class="review-comment">"Qualidade e pontualidade em todas as entregas."</span></div>
+                <div class="review-card"><div class="review-top"><span class="review-stars">★★★★★</span><span class="review-name">Rio SF Exportação</span></div><span class="review-comment">"Confiança e rastreabilidade do campo ao destino."</span></div>
+                <div class="review-card"><div class="review-top"><span class="review-stars">★★★★★</span><span class="review-name">Frutivale</span></div><span class="review-comment">"Equipe técnica diferenciada, resultado visível na colheita."</span></div>
+                <div class="review-card"><div class="review-top"><span class="review-stars">★★★★★</span><span class="review-name">Agrícola Famosa</span></div><span class="review-comment">"Padrão de exportação que abre portas no mercado global."</span></div>
+                <div class="review-card"><div class="review-top"><span class="review-stars">★★★★★</span><span class="review-name">Syscrop</span></div><span class="review-comment">"Gestão eficiente e produto sempre no ponto ideal."</span></div>
+                <div class="review-card"><div class="review-top"><span class="review-stars">★★★★★</span><span class="review-name">AgroStar</span></div><span class="review-comment">"Parceiros que entendem de qualidade e entregam sempre."</span></div>
+                <div class="review-card"><div class="review-top"><span class="review-stars">★★★★★</span><span class="review-name">Vale Fértil</span></div><span class="review-comment">"Relacionamento transparente e produto de excelência."</span></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ══ LOCALIZAÇÃO ══ -->
+    <section class="py-14 px-6 border-b border-zinc-900 reveal-up">
+        <h2 class="text-[15px] font-black text-[#00ff88] uppercase tracking-[0.3em] mb-6 italic text-center" id="sec-loc">Localização</h2>
+        <div class="map-wrap mb-4">
+            <iframe src="https://maps.google.com/maps?q=SF+Fruits+Petrolina+PE&output=embed&hl=pt-BR" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" style="width:100%;height:100%;border:none;display:block;"></iframe>
+        </div>
+        <div style="background:rgba(0,255,136,0.04);border:1px solid rgba(0,255,136,0.15);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;">
+            <div style="width:36px;height:36px;background:rgba(0,255,136,0.1);border:1px solid rgba(0,255,136,0.3);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="#00ff88"/></svg>
+            </div>
+            <div>
+                <p style="font-size:10.5px;font-weight:900;color:#fff;text-transform:uppercase;letter-spacing:0.05em;margin:0 0 2px;">SF Fruits</p>
+                <p style="font-size:10px;color:#71717a;font-style:italic;margin:0;">Projeto Pontal Sul — Estr. Canal Principal<br>Zona Rural, Petrolina, PE · 56334-899</p>
+            </div>
+            <a href="https://maps.app.goo.gl/6AaJPngegz1RdrqV7" target="_blank" style="margin-left:auto;flex-shrink:0;background:#00ff88;color:#000;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;padding:7px 12px;border-radius:20px;text-decoration:none;white-space:nowrap;">Abrir</a>
+        </div>
+    </section>
+
+
+    <!-- ══ PARCEIROS ══ -->
+    <section class="py-14 px-6 border-b border-zinc-900 reveal-up">
+        <h2 class="text-[15px] font-black text-[#00ff88] uppercase tracking-[0.3em] mb-8 italic text-center" id="sec-parc">Parceiros</h2>
+        <div class="flex flex-wrap gap-2 justify-center">
+            <span class="partner-pill">Grupo Carrefour</span>
+            <span class="partner-pill">Ceasaminas</span>
+            <span class="partner-pill">Fruit Logistica</span>
+            <span class="partner-pill">GlobalGAP</span>
+            <span class="partner-pill">Embrapa</span>
+            <span class="partner-pill">Banco do Brasil</span>
+            <span class="partner-pill">Codevasf</span>
+            <span class="partner-pill">Agrícola Famosa</span>
+            <span class="partner-pill">Rio São Francisco Exp.</span>
+            <span class="partner-pill">Frutivale</span>
+            <span class="partner-pill">Syscrop</span>
+            <span class="partner-pill">AgroStar</span>
+            <span class="partner-pill">Vale Fértil</span>
+            <span class="partner-pill">BRF Agro</span>
+        </div>
+    </section>
+    <!-- ══ CTA FINAL ══ -->
+    <section class="py-14 px-6 bg-black border-b border-zinc-900 reveal-up">
+        <p id="cta-final-sub" class="text-[12.7px] font-black text-zinc-400 uppercase tracking-wide italic mb-3">Quer frutas com padrão profissional e entrega confiável?</p>
+        <h2 id="cta-final-h" class="text-[28px] font-black uppercase italic leading-[0.9] tracking-tighter mb-8">Fale <span class="neon-green">agora</span><br>no WhatsApp.</h2>
+        <a href="https://wa.me/557481206296" class="flex items-center justify-center gap-2 bg-[#00ff88] text-black text-[11.5px] font-black uppercase tracking-widest px-6 py-4 rounded-xl w-full hover:bg-white transition-colors duration-300">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"/></svg>
+            Solicitar orçamento no WhatsApp
+        </a>
+    </section>
+
+    <footer class="py-12 px-6 text-center reveal-up">
+        <div class="font-black italic text-xl mb-2">SF<span class="neon-green">FRUITS</span></div>
+        <p class="text-zinc-500 text-[11.5px] italic mb-3">Produção com qualidade, transparência e compromisso.</p>
+        <p class="text-zinc-600 text-[9px] uppercase tracking-[0.4em]">Petrolina · Brasil · © SF Frutas</p>
+    </footer>
+</div>
+
+<!-- PROFILE OVERLAY -->
+<div id="profile-overlay">
+    <button id="close-profile-btn" onclick="closeProfile()">Fechar</button>
+    <div id="profile-content"></div>
+</div>
+
+<script>
+/* ══ DADOS ══ */
+const team = {
+    michel: {
+        name:"Michel Jackson", job:"Gerente de Produção", initials:"MJ",
+        img:"https://res.cloudinary.com/dwrq06fta/image/upload/f_auto,q_auto/Novo_projeto_264_35A9E47_jvwsk2.png",
+        resumo:"Gerente de Produção Uva de Mesa (Arra), com expertise em viticultura de precisão, gestão de equipes e produção de uvas premium de alto padrão.",
+        stats:[["+5mil","Hectares gerenciados"],["15 anos","de experiência"],["Elite","Técnica"]],
+        experiencia:{empresa:"Vinícola Aurora / Vinhedos do Vale", detalhes:"Redução de 30% de agroquímicos; Implementação de MIP e gestão de irrigação/fertirrigação."},
+        pills:[["Planejamento Estratégico","Definição de metas de safra e alinhamento com mercado."],["Gestão de Equipes","Coordenação de funcionários em poda, desbaste e colheita."],["Controle Fitossanitário","Manejo integrado de pragas e doenças para proteção."],["Monitoramento Qualidade","Controle rigoroso do BRIX e calibre dos bagos."],["Certificações","Selos GlobalGAP e GRASP para exportação."],["Otimização de Custos","Redução de desperdício e maximização da margem."],["Manejo de Irrigação","Gotejamento e fertirrigação para doçura e calibre."],["Rastreabilidade","Registro completo do campo à embalagem final."],["Inovação Tecnológica","Coberturas plásticas, drones e softwares de gestão."],["Colheita Coordenada","Programação conforme maturação ideal para exportação."],["Poda Técnica","Corte para balancear carga e qualidade comercial."],["Análise de Solo","Correção de nutrientes para sustentar produtividade."],["Treinamento Equipes","Capacitação em manejo pós-colheita e segurança."],["Logística Pós-Colheita","Pré-resfriamento rápido para preservar vida útil."],["Viticultura de Precisão","Sensores e aplicação localizada conforme necessidade."]]
+    },
+    ana:      {name:"Ana Beatriz",   job:"Qualidade",  img:"https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&q=80", initials:"AB", resumo:"Especialista em Food Safety, certificações internacionais e rastreabilidade de frutas frescas para exportação.", stats:[["100%","Conformidade"],["12 anos","Experiência"],["Elite","Técnica"]], pills:[["Global GAP","Padrão global para boas práticas agrícolas."],["HACCP","Análise de perigos e pontos críticos de controle."],["GRASP","Certificação social para exportação europeia."],["Rastreabilidade","Controle do campo à embalagem final."],["Auditorias","Condução de auditorias internas e externas."],["BPA","Boas práticas agrícolas aplicadas no campo."],["Food Safety","Gestão de segurança alimentar em toda a cadeia."],["ISO 22000","Conhecimento em sistemas de gestão alimentar."],["Calibre & BRIX","Monitoramento de padrão e doçura dos frutos."],["Treinamento","Capacitação de equipes em qualidade e higiene."],["Controle de Lote","Gestão de lotes para conformidade na exportação."],["Não Conformidade","Tratamento e correção de desvios de qualidade."],["Documentação","Elaboração de relatórios e registros técnicos."],["Controle de Pragas","Monitoramento integrado para conformidade."],["Embalagem","Padrões de embalagem para mercados internacionais."]]},
+    ricardo:  {name:"Ricardo Santos",job:"Logística",  img:"https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&q=80", initials:"RS", resumo:"Especialista em Cold Chain, exportação marítima e gestão de embarques internacionais de frutas frescas.", stats:[["24h","Transit Time"],["Global","Network"],["Elite","Técnica"]], pills:[["Exportação","Gestão de embarques internacionais de frutas."],["Cold Chain","Manutenção da cadeia de frio do campo ao destino."],["Modal Marítimo","Operação de contêineres reefer para exportação."],["Modal Aéreo","Logística aérea para mercados premium de alta demanda."],["Documentação","Emissão de BL, packing list e certificados fitossanitários."],["Desembaraço","Gestão de desembaraço aduaneiro e compliance."],["Rastreamento","Monitoramento em tempo real da carga em trânsito."],["Temperatura","Controle rigoroso de temperatura durante o transporte."],["Fornecedores","Negociação com armadores, transitários e despachantes."],["Planejamento","Programação de embarques conforme janelas de colheita."],["Roteirização","Otimização de rotas para redução de custo e tempo."],["Controle de Estoque","Gestão de câmaras frigoríficas e giro de produto."],["Compliance","Conformidade com regulamentos sanitários internacionais."],["ERP/WMS","Uso de sistemas de gestão logística e armazém."],["KPIs","Monitoramento de indicadores de desempenho logístico."]]},
+    carlos:   {name:"Carlos Oliveira",job:"Agronomia", img:"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80", initials:"CO", resumo:"Doutor em solos e nutrição vegetal, com 20 anos de campo e expertise em recuperação de áreas e máxima produtividade.", stats:[["PHD","Solos"],["20 anos","Campo"],["Elite","Técnica"]], pills:[["Nutrição Vegetal","Equilíbrio mineral para alta produtividade e sabor."],["Análise de Solo","Correção técnica de pH, macro e micronutrientes."],["Fertirrigação","Aplicação de nutrientes via sistema hídrico localizado."],["Matéria Orgânica","Gestão de húmus e compostagem para saúde do solo."],["Calagem","Correção de acidez para máxima disponibilidade nutricional."],["Microbioma","Uso de bioinsumos e fungos benéficos no solo."],["Fitotecnia","Manejo de crescimento e desenvolvimento das plantas."],["Podas Técnicas","Equilíbrio entre carga produtiva e qualidade dos frutos."],["Controle de Erosão","Técnicas de conservação do solo em áreas irrigadas."],["Mapeamento","Georreferenciamento e zoneamento de áreas produtivas."],["Adubação Foliar","Complementação nutricional via folhas em fases críticas."],["Recuperação de Áreas","Reabilitação de solos degradados para nova produção."],["Irrigação","Manejo hídrico para máxima eficiência e qualidade."],["Variedades","Seleção de cultivares para condições do Vale do São Francisco."],["Agricultura de Precisão","Uso de sensores e dados para tomada de decisão no campo."]]},
+    fernanda: {name:"Fernanda Lima", job:"Exportação", img:"https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200&q=80", initials:"FL", resumo:"Especialista em comércio exterior, negociação com importadores globais e abertura de novos mercados para frutas frescas.", stats:[["8 anos","Experiência"],["Global","Mercados"],["Elite","Técnica"]], pills:[["Comércio Exterior","Gestão de operações de exportação de ponta a ponta."],["Negociação","Contratos com importadores na Europa, EUA e Ásia."],["Certificações","Processos de habilitação em novos mercados importadores."],["Inteligência de Mercado","Análise de tendências e oportunidades globais."],["Câmbio","Gestão de exposição cambial e hedge em contratos."],["Prospecção","Captação e desenvolvimento de novos clientes internacionais."],["Feiras Internacionais","Representação em Fruit Logistica e Produce."],["Regulatório","Conformidade com barreiras sanitárias e fitossanitárias."],["Precificação","Formação de preço de exportação com análise de margem."],["Pós-Venda","Relacionamento e fidelização de importadores globais."],["Abertura de Mercado","Processos de habilitação em países com barreiras técnicas."],["Marketing","Posicionamento de marca em mercados premium."],["CRM","Gestão de relacionamento com carteira internacional."],["Logística Int.","Coordenação com operadores logísticos internacionais."],["Due Diligence","Análise de parceiros e mitigação de riscos comerciais."]]},
+    pedro:    {name:"Pedro Maia",    job:"Irrigação",  img:"https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&q=80", initials:"PM", resumo:"Mestre em Engenharia Hídrica com 10 anos de campo, especialista em sistemas de irrigação de precisão para viticultura.", stats:[["10 anos","Campo"],["Mestre","Eng. Hídrica"],["Elite","Técnica"]], pills:[["Gotejamento","Sistemas de irrigação localizada de alta eficiência."],["Fertirrigação","Aplicação de nutrientes via sistema hídrico integrado."],["Automação","Controle automatizado de válvulas, bombas e sensores."],["Telemetria","Monitoramento remoto de pressão, vazão e umidade."],["Dimensionamento","Projeto hidráulico de sistemas para grandes áreas."],["Pivô Central","Operação e manutenção de pivôs em áreas extensas."],["Aspersão","Sistemas de aspersão para resfriamento e geada."],["Qualidade da Água","Análise e tratamento de água para irrigação."],["Eficiência Hídrica","Redução do consumo sem perda de produtividade."],["Sonda de Umidade","Leitura e interpretação de sensores de solo."],["Manejo de Déficit","Irrigação controlada para concentração de sólidos solúveis."],["Manutenção","Prevenção e correção de falhas em sistemas irrigados."],["Projetos","Elaboração de projetos para financiamentos e laudos."],["Drenagem","Sistemas de drenagem para evitar encharcamento."],["Sustentabilidade","Gestão responsável dos recursos hídricos no campo."]]}
+};
+
+/* ══ GALERIA ══ */
+const GALLERY = [
+    {url:"https://sffruits.com.br/wp-content/uploads/2022/02/Slider-1.jpg", alt:"SF Fruits — Vista da fazenda"},
+    {url:"https://sffruits.com.br/wp-content/uploads/2022/02/Slider-2.jpg", alt:"SF Fruits — Plantação"},
+    {url:"https://sffruits.com.br/wp-content/uploads/2022/02/Slider-3.jpg", alt:"SF Fruits — Campo"},
+    {url:"https://sffruits.com.br/wp-content/uploads/2022/02/Slider-4.jpg", alt:"SF Fruits — Produção"},
+    {url:"https://sffruits.com.br/wp-content/uploads/2022/02/Plantio-1.jpg", alt:"Plantio 1"},
+    {url:"https://sffruits.com.br/wp-content/uploads/2022/02/Plantio-2.jpg", alt:"Plantio 2"},
+    {url:"https://sffruits.com.br/wp-content/uploads/2022/02/SF-Fruits-Grapes-12.jpg", alt:"Uvas SF Fruits"},
+    {url:"https://sffruits.com.br/wp-content/uploads/2022/02/SF-Fruits-location.jpg", alt:"Localização SF Fruits"},
+    {url:"https://sffruits.com.br/wp-content/uploads/2022/02/Grapes.jpg", alt:"Uvas frescas"}
+];
+
+function buildGallery(id, smallOnly) {
+    const g = document.getElementById(id);
+    if (!g) return;
+    g.innerHTML = '';
+    if (smallOnly) {
+        // Menu: grid simples 3 colunas
+        g.style.display = 'grid';
+        g.style.gridTemplateColumns = '1fr 1fr 1fr';
+        g.style.gap = '3px';
+        GALLERY.forEach(item => {
+            const d = document.createElement('div');
+            d.style.cssText = 'aspect-ratio:1;overflow:hidden;cursor:pointer;border-radius:6px;';
+            d.onclick = () => openLightbox(item.url);
+            const im = document.createElement('img');
+            im.src = item.url; im.alt = item.alt; im.loading = 'lazy';
+            im.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+            d.appendChild(im); g.appendChild(d);
+        });
+        return;
+    }
+    // Slider principal
+    GALLERY.forEach((item, i) => {
+        const d = document.createElement('div');
+        d.className = 'g-item';
+        d.style.backgroundImage = `url('${item.url}')`;
+        d.onclick = () => openLightbox(item.url);
+        g.appendChild(d);
+    });
+    // Nav buttons
+    const nextBtn = document.getElementById('gal-next');
+    const prevBtn = document.getElementById('gal-prev');
+    if (nextBtn && !nextBtn._bound) {
+        nextBtn._bound = true;
+        nextBtn.onclick = () => { const items = g.querySelectorAll('.g-item'); g.appendChild(items[0]); };
+        prevBtn.onclick = () => { const items = g.querySelectorAll('.g-item'); g.prepend(items[items.length - 1]); };
+    }
+}
+
+function openLightbox(src) {
+    document.getElementById('lb-img').src = src;
+    document.getElementById('lightbox').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+function closeLightbox() {
+    document.getElementById('lightbox').classList.remove('open');
+    document.body.style.overflow = 'auto';
+}
+
+/* ══ ELITE GRID no menu ══ */
+function buildMenuElite() {
+    const g = document.getElementById('menu-elite-grid');
+    if (!g || g.children.length) return;
+    Object.entries(team).forEach(([id, d]) => {
+        const div = document.createElement('div');
+        div.className = 'text-center cursor-pointer group';
+        div.onclick = () => { closeHamburger(); setTimeout(() => openProfile(id), 350); };
+        const avatar = d.img
+            ? `<img src="${d.img}" class="w-16 h-16 mx-auto mb-2 rounded-full border-2 border-zinc-800 group-hover:border-[#00ff88] object-cover transition-colors">`
+            : `<div class="w-16 h-16 mx-auto mb-2 rounded-full border-2 border-zinc-800 bg-zinc-900 flex items-center justify-center group-hover:border-[#00ff88] transition-colors"><span class="text-zinc-600 font-black text-sm italic group-hover:text-white transition-colors">${d.initials}</span></div>`;
+        div.innerHTML = avatar + `<p class="text-[9.2px] font-black uppercase italic leading-tight">${d.name.split(' ')[0]}</p><p class="text-[8px] text-zinc-500 uppercase">${d.job}</p>`;
+        g.appendChild(div);
+    });
+}
+
+/* ══ HAMBÚRGUER ══ */
+function openHamburger() {
+    document.getElementById('hamburger-menu').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    buildMenuElite();
+    buildGallery('menu-gallery', true);
+}
+function closeHamburger() {
+    document.getElementById('hamburger-menu').classList.remove('open');
+    document.body.style.overflow = 'auto';
+}
+function toggleSub(subId, navId) {
+    const sub = document.getElementById(subId);
+    const nav = document.getElementById(navId);
+    const wasOpen = sub.classList.contains('open');
+    document.querySelectorAll('.menu-sub').forEach(s => s.classList.remove('open'));
+    document.querySelectorAll('.menu-nav-item').forEach(n => n.classList.remove('sub-open'));
+    if (!wasOpen) { sub.classList.add('open'); nav.classList.add('sub-open'); }
+}
+
+/* ══ PROFILE ══ */
+function openProfile(id) {
+    const data = team[id];
+    const overlay = document.getElementById('profile-overlay');
+    const content = document.getElementById('profile-content');
+    const loader  = document.getElementById('mj-loader');
+    if (id === 'michel') loader.classList.add('active');
+    const safe = s => (s||'').replace(/'/g, '&#39;');
+    content.innerHTML = `
+        <div class="app-wrapper py-10 px-5">
+            <header class="flex justify-between items-center mb-10">
+                <div class="font-black italic text-xl">SF<span style="color:#00ff88">FRUITS</span></div>
+            </header>
+            <div class="flex items-center gap-4 mb-10">
+                ${data.img
+                    ? `<img src="${data.img}" class="w-24 h-24 rounded-full border-2 border-[#00ff88] object-cover">`
+                    : `<div class="w-24 h-24 rounded-full border-2 border-[#00ff88] bg-zinc-900 flex items-center justify-center"><span class="text-white font-black text-2xl italic">${data.initials}</span></div>`}
+                <div>
+                    <h1 class="text-2xl font-black uppercase italic leading-none">${data.name}</h1>
+                    <p style="color:#00ff88" class="text-[11.5px] font-black uppercase mt-1">${data.job}</p>
+                </div>
+            </div>
+            <div class="bg-zinc-900/50 p-5 rounded-2xl border border-zinc-800 mb-8">
+                <p class="text-[12.7px] text-zinc-300 italic leading-relaxed">${data.resumo}</p>
+            </div>
+            <div class="grid grid-cols-3 gap-2 mb-10">
+                ${data.stats.map(s=>`<div class="bg-zinc-900/60 p-3 rounded-xl text-center"><p style="color:#00ff88" class="font-black text-lg">${s[0]}</p><p class="text-[7px] text-zinc-500 uppercase">${s[1]}</p></div>`).join('')}
+            </div>
+            ${data.experiencia ? `<div class="mb-10"><h2 class="text-[12.7px] font-black text-white uppercase mb-4 border-l-2 border-[#00ff88] pl-3 italic">Experiência Profissional</h2><p class="text-[13.8px] font-bold uppercase mb-2" style="color:#00ff88">${data.experiencia.empresa}</p><p class="text-[13.8px] text-zinc-400 italic">${data.experiencia.detalhes}</p></div>` : ''}
+            <h2 class="text-[11.5px] font-black uppercase text-center mb-6 italic" style="color:#00ff88">Expertise & Qualificações</h2>
+            <div class="grid grid-cols-3 gap-2 mb-8">
+                ${data.pills.map(p=>`<div class="pill-card" onclick="openModal('${safe(p[0])}','${safe(p[1])}')">${p[0]}</div>`).join('')}
+            </div>
+            <div class="pb-24 px-1"><button onclick="openAgenda()" style="width:100%;background:#00ff88;color:#000;font-weight:900;font-size:11px;text-transform:uppercase;letter-spacing:.15em;padding:16px;border-radius:14px;border:none;cursor:pointer;">📅 Agende uma visita</button></div>
+        </div>`;
+    setTimeout(() => {
+        loader.classList.remove('active');
+        overlay.classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }, id === 'michel' ? 1200 : 300);
+}
+
+function openModal(title, text) {
+    document.getElementById('modal-title').innerText = title;
+    document.getElementById('modal-text').innerText = text;
+    document.getElementById('desc-modal').style.display = 'flex';
+}
+function closeModal()   { document.getElementById('desc-modal').style.display = 'none'; }
+function closeProfile() { document.getElementById('profile-overlay').classList.remove('open'); document.body.style.overflow = 'auto'; }
+
+function setLang(lang) {
+    ['pt','es','en'].forEach(l => document.getElementById('lang-'+l).classList.remove('active'));
+    document.getElementById('lang-'+lang).classList.add('active');
+
+    var T = {
+        pt: {
+            hero_title: 'Uva <span class="neon-green">Premium</span><br>cultivadas com<br>precisão e confiança.',
+            hero_sub:   'Da união de duas famílias nasce uma produção de alta qualidade, com tecnologia, cuidado e padrão profissional em cada colheita.',
+            cta_btn:    'Solicitar orçamento no WhatsApp',
+            headline:   'Qualidade que você <span class="neon-green">confia,</span><br>parceria que você <span class="neon-green">mantém.</span>',
+            valor1: 'Produção com agricultura de precisão',
+            valor2: 'Equipe altamente qualificada',
+            valor3: 'Controle de qualidade em todas as etapas',
+            valor4: 'Relacionamento direto e transparente',
+            sec_elite: 'Elite Técnica',
+            sec_dif:   'Por que escolher a SFFRUITS?',
+            sec_ben:   'Benefícios',
+            sec_gal:   'Galeria',
+            sec_social:'O que dizem',
+            sec_loc:   'Localização',
+            sec_parc:  'Parceiros',
+            cta_final_sub: 'Quer frutas com padrão profissional e entrega confiável?',
+            cta_final_h:   'Fale <span class="neon-green">agora</span><br>no WhatsApp.',
+        },
+        en: {
+            hero_title: 'Premium <span class="neon-green">Fruits</span><br>grown with<br>precision and trust.',
+            hero_sub:   'From the union of two families, a high-quality production born from technology, care and professional standards in every harvest.',
+            cta_btn:    'Request a quote on WhatsApp',
+            headline:   'Quality you <span class="neon-green">trust,</span><br>partnership you <span class="neon-green">keep.</span>',
+            valor1: 'Production with precision agriculture',
+            valor2: 'Highly qualified team',
+            valor3: 'Quality control at every stage',
+            valor4: 'Direct and transparent relationship',
+            sec_elite: 'Technical Elite',
+            sec_dif:   'Highlights',
+            sec_ben:   'Benefits',
+            sec_gal:   'Gallery',
+            sec_social:'Testimonials',
+            sec_loc:   'Location',
+            sec_parc:  'Partners',
+            cta_final_sub: 'Want fruits with professional standards and reliable delivery?',
+            cta_final_h:   'Talk to us <span class="neon-green">now</span><br>on WhatsApp.',
+        },
+        es: {
+            hero_title: 'Frutas <span class="neon-green">Premium</span><br>cultivadas con<br>precisión y confianza.',
+            hero_sub:   'De la unión de dos familias nace una producción de alta calidad, con tecnología, cuidado y estándar profesional en cada cosecha.',
+            cta_btn:    'Solicitar cotización en WhatsApp',
+            headline:   'Calidad en la que <span class="neon-green">confías,</span><br>alianza que <span class="neon-green">perdura.</span>',
+            valor1: 'Producción con agricultura de precisión',
+            valor2: 'Equipo altamente calificado',
+            valor3: 'Control de calidad en todas las etapas',
+            valor4: 'Relación directa y transparente',
+            sec_elite: 'Élite Técnica',
+            sec_dif:   'Diferenciales',
+            sec_ben:   'Beneficios',
+            sec_gal:   'Galería',
+            sec_social:'Testimonios',
+            sec_loc:   'Ubicación',
+            sec_parc:  'Socios',
+            cta_final_sub: '¿Quieres frutas con estándar profesional y entrega confiable?',
+            cta_final_h:   'Habla <span class="neon-green">ahora</span><br>por WhatsApp.',
+        }
+    };
+
+    var t = T[lang] || T['pt'];
+
+    // Hero
+    var h1 = document.querySelector('h1');
+    if (h1) h1.innerHTML = t.hero_title;
+    var heroSub = document.querySelector('.hero-sub');
+    if (heroSub) heroSub.innerHTML = t.hero_sub;
+
+    // Headline
+    var hl = document.querySelector('.headline-txt');
+    if (hl) hl.innerHTML = t.headline;
+
+    // Valores
+    var vals = document.querySelectorAll('.valor-item');
+    var vkeys = ['valor1','valor2','valor3','valor4'];
+    vals.forEach(function(el,i){ if(t[vkeys[i]]) el.textContent = t[vkeys[i]]; });
+
+    // CTA buttons
+    document.querySelectorAll('.cta-wa-txt').forEach(function(el){ el.textContent = t.cta_btn; });
+
+    // Section titles
+    var secMap = {
+        'sec-elite': t.sec_elite, 'sec-dif': t.sec_dif, 'sec-ben': t.sec_ben,
+        'sec-gal': t.sec_gal, 'sec-social': t.sec_social, 'sec-loc': t.sec_loc, 'sec-parc': t.sec_parc
+    };
+    Object.keys(secMap).forEach(function(id){
+        var el = document.getElementById(id);
+        if (el) el.textContent = secMap[id];
+    });
+
+    // CTA final
+    var ctaSub = document.getElementById('cta-final-sub');
+    var ctaH   = document.getElementById('cta-final-h');
+    if (ctaSub) ctaSub.textContent = t.cta_final_sub;
+    if (ctaH)   ctaH.innerHTML    = t.cta_final_h;
+}
+
+/* ══ INIT ══ */
+window.onload = () => {
+    buildGallery('page-gallery', false);
+    setTimeout(() => {
+        document.getElementById('main-loader').classList.add('loader-hidden');
+        document.body.classList.remove('loading');
+
+        var revealEls = document.querySelectorAll('.reveal-up');
+
+        function checkReveal() {
+            var wh = window.innerHeight;
+            revealEls.forEach(function(el) {
+                if (el.classList.contains('active')) return;
+                var rect = el.getBoundingClientRect();
+                if (rect.top < wh + 60) {
+                    el.classList.add('active');
+                }
+            });
+        }
+
+        window.addEventListener('scroll', checkReveal, { passive: true });
+        checkReveal(); // ativa os que já estão visíveis no load
+    }, 1000);
+};
+/* ══ AGENDA MODAL ══ */
+function openAgenda() {
+    document.getElementById('agenda-modal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+function closeAgenda(e) {
+    if (e && e.target !== document.getElementById('agenda-modal')) return;
+    document.getElementById('agenda-modal').classList.remove('open');
+    document.body.style.overflow = 'auto';
+}
+function enviarAgenda() {
+    var nome    = document.getElementById('ag-nome').value.trim();
+    var empresa = document.getElementById('ag-empresa').value.trim();
+    var cargo   = document.getElementById('ag-cargo').value.trim();
+    var data    = document.getElementById('ag-data').value.trim();
+    var tel     = document.getElementById('ag-tel').value.trim();
+    if (!nome || !empresa) { alert('Preencha pelo menos nome e empresa.'); return; }
+    var msg = '*Solicitacao de Visita - SF Fruits*' + '\n\n'
+        + 'Nome: ' + nome + '\n'
+        + 'Empresa: ' + empresa + '\n'
+        + (cargo  ? 'Cargo: ' + cargo + '\n' : '')
+        + (data   ? 'Data preferida: ' + data + '\n' : '')
+        + (tel    ? 'WhatsApp: ' + tel + '\n' : '');
+    window.open('https://wa.me/557481206296?text=' + encodeURIComponent(msg), '_blank');
+}
+
+/* ══ CARROSSEL REVIEWS ══ */
+(function() {
+    function init() {
+        var wrap = document.getElementById('reviews-wrap');
+        if (!wrap) return;
+        var startX = 0, isDragging = false;
+        // Pausa ao tocar, retoma ao soltar
+        wrap.addEventListener('mousedown',  function(e){ isDragging = true; startX = e.clientX; wrap.classList.add('paused','dragging'); }, {passive:true});
+        wrap.addEventListener('touchstart', function(e){ isDragging = true; startX = e.touches[0].clientX; wrap.classList.add('paused','dragging'); }, {passive:true});
+        window.addEventListener('mouseup',  function(){ if(!isDragging) return; isDragging = false; wrap.classList.remove('paused','dragging'); });
+        window.addEventListener('touchend', function(){ if(!isDragging) return; isDragging = false; wrap.classList.remove('paused','dragging'); });
+    }
+    window.addEventListener('load', init);
+})();
+</script>
+</body>
+</html>
